@@ -1,0 +1,271 @@
+services:
+  - type: keyvalue
+    name: codesync-redis
+    ipAllowList: []
+
+  - type: pserv
+    name: codesync-eureka
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - key: SERVICE_NAME
+        value: eureka-server
+
+  - type: pserv
+    name: codesync-auth-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - fromGroup: codesync-secrets
+      - key: SERVICE_NAME
+        value: auth-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-project-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - key: SERVICE_NAME
+        value: project-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-file-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - key: SERVICE_NAME
+        value: file-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-collab-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - key: SERVICE_NAME
+        value: collab-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-execution-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - fromGroup: codesync-rabbitmq
+      - key: SERVICE_NAME
+        value: execution-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-version-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - key: SERVICE_NAME
+        value: version-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-comment-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - key: SERVICE_NAME
+        value: comment-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-notification-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - fromGroup: codesync-rabbitmq
+      - fromGroup: codesync-secrets
+      - key: SERVICE_NAME
+        value: notification-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: pserv
+    name: codesync-audit-service
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      - fromGroup: codesync-common
+      - fromGroup: codesync-database
+      - key: SERVICE_NAME
+        value: audit-service
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: web
+    name: codesync-gateway
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - fromGroup: codesync-common
+      - key: SERVICE_NAME
+        value: codesync-gateway
+
+envVarGroups:
+  - name: codesync-common
+    envVars:
+      - key: SERVER_PORT
+        value: 10000
+      - key: EUREKA_SERVER_URL
+        value: http://codesync-eureka:10000/eureka/
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        sync: false
+      - key: OAUTH2_REDIRECT_URI
+        sync: false
+      - key: SUPER_ADMIN_EMAIL
+        sync: false
+
+  - name: codesync-database
+    envVars:
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+
+  - name: codesync-rabbitmq
+    envVars:
+      - key: RABBITMQ_HOST
+        sync: false
+      - key: RABBITMQ_PORT
+        value: 5672
+      - key: RABBITMQ_USER
+        sync: false
+      - key: RABBITMQ_PASS
+        sync: false
+      - key: SPRING_RABBITMQ_HOST
+        sync: false
+      - key: SPRING_RABBITMQ_PORT
+        value: 5672
+      - key: SPRING_RABBITMQ_USERNAME
+        sync: false
+      - key: SPRING_RABBITMQ_PASSWORD
+        sync: false
+
+  - name: codesync-secrets
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION_MS
+        value: 3600000
+      - key: EMAIL_FROM
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: APP_RAZORPAY_KEY_ID
+        sync: false
+      - key: APP_RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID
+        sync: false
+      - key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE
+        value: email,profile
+      - key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID
+        sync: false
+      - key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET
+        sync: false
+      - key: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_SCOPE
+        value: user:email,read:user
