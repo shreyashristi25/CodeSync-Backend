@@ -26,6 +26,11 @@ services:
       - fromGroup: codesync-secrets
       - key: SERVICE_NAME
         value: auth-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -44,6 +49,11 @@ services:
       - fromGroup: codesync-database
       - key: SERVICE_NAME
         value: project-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -62,6 +72,11 @@ services:
       - fromGroup: codesync-database
       - key: SERVICE_NAME
         value: file-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -80,6 +95,11 @@ services:
       - fromGroup: codesync-database
       - key: SERVICE_NAME
         value: collab-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -99,6 +119,11 @@ services:
       - fromGroup: codesync-rabbitmq
       - key: SERVICE_NAME
         value: execution-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -117,6 +142,11 @@ services:
       - fromGroup: codesync-database
       - key: SERVICE_NAME
         value: version-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -135,6 +165,11 @@ services:
       - fromGroup: codesync-database
       - key: SERVICE_NAME
         value: comment-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -155,6 +190,11 @@ services:
       - fromGroup: codesync-secrets
       - key: SERVICE_NAME
         value: notification-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -173,6 +213,11 @@ services:
       - fromGroup: codesync-database
       - key: SERVICE_NAME
         value: audit-service
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: keyvalue
+          name: codesync-redis
+          property: connectionString
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
@@ -201,11 +246,6 @@ envVarGroups:
         value: http://codesync-eureka:10000/eureka/
       - key: SPRING_PROFILES_ACTIVE
         value: render
-      - key: SPRING_DATA_REDIS_URL
-        fromService:
-          type: keyvalue
-          name: codesync-redis
-          property: connectionString
       - key: FRONTEND_URL
         sync: false
       - key: OAUTH2_REDIRECT_URI
