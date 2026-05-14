@@ -1,0 +1,45 @@
+server:
+  port: ${PAYMENT_SERVICE_PORT:8090}
+
+spring:
+  application:
+    name: payment-service
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  datasource:
+    url: ${PAYMENT_DB_URL:jdbc:mysql://localhost:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${PAYMENT_DB_USERNAME:root}
+    password: ${PAYMENT_DB_PASSWORD:Shreya@2002}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+app:
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID:rzp_test_SjHFqJGmWI1Avc}
+    key-secret: ${RAZORPAY_KEY_SECRET:c2ROXKSptXTRwwTY7wpGYvLh}
+    test-mode: true
+  subscription:
+    free-projects-limit: 5
+    free-executions-limit: 50
+    free-collaborators-limit: 3
+    pro-price: 19900
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+logging:
+  level:
+    com.codesync.payment: DEBUG

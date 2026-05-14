@@ -1,0 +1,66 @@
+server:
+  port: ${AUTH_SERVICE_PORT:8081}
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${AUTH_DB_URL:jdbc:mysql://localhost:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${AUTH_DB_USERNAME:root}
+    password: ${AUTH_DB_PASSWORD:Shreya@2002}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+app:
+  services:
+    project: http://localhost:8082
+    file: http://localhost:8083
+    collab: http://localhost:8084
+    execution: http://localhost:8085
+    version: http://localhost:8086
+    comment: http://localhost:8087
+    notification: http://localhost:8088
+    audit: http://localhost:8092
+  jwt:
+    secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-1234567890}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+  admin:
+    super-email: ${SUPER_ADMIN_EMAIL:admin@codesync.local}
+  email:
+    from: ${EMAIL_FROM:onboarding@resend.dev}
+    base-url: ${FRONTEND_URL:http://localhost:4200}
+    api-key: ${RESEND_API_KEY:re_KRT8bePo_Nj2T8FqqNix8bfNESFhXvwow}
+  notifications:
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8080/api/notifications}
+  oauth2:
+    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:4200/oauth-success}
+  razorpay:
+    key-id: rzp_test_SjHFqJGmWI1Avc
+    key-secret: c2ROXKSptXTRwwTY7wpGYvLh
+    webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:your_razorpay_webhook_secret}
+    test-mode: false
+  subscription:
+    free-projects-limit: 5
+    free-executions-limit: 50
+    free-collaborators-limit: 3
+    pro-price: 19900  # Price in paise (₹199)
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

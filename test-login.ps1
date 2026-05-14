@@ -1,0 +1,2 @@
+$token = 'eyJhbGciOiJIUzM4NCJ9.eyJmdWxsTmFtZSI6Ik5ldyBBZG1pbiIsInJvbGUiOiJBRE1JTiIsInVzZXJJZCI6OSwiZW1haWwiOiJuZXdhZG1pbkBjb2Rlc3luYy5jb20iLCJzdWIiOiJuZXdhZG1pbkBjb2Rlc3luYy5jb20iLCJpYXQiOjE3Nzc0NTM2MTEsImV4cCI6MTc3NzQ1NzIxMX0.iFlZpL8Bi8zMTtnqSJp33nTpa4YZmto0YwQkf78jJ6qX3iVG568I67-xO3Hk835e'
+Invoke-RestMethod -Uri 'http://localhost:8080/api/auth/admin-requests?status=PENDING' -Method GET -Headers @{'Authorization'="Bearer $token";'X-Admin-Email'='newadmin@codesync.com'}

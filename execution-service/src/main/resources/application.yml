@@ -1,0 +1,41 @@
+server:
+  port: ${EXECUTION_SERVICE_PORT:8085}
+
+spring:
+  application:
+    name: execution-service
+  datasource:
+    url: ${EXECUTION_DB_URL:jdbc:mysql://localhost:3306/execution_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${EXECUTION_DB_USERNAME:root}
+    password: ${EXECUTION_DB_PASSWORD:Shreya@2002}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+
+codesync:
+  execution:
+    queue: execution.jobs
+    timeout-seconds: 10
+    python-command: ${EXECUTION_PYTHON_CMD:python}
+    node-command: ${EXECUTION_NODE_CMD:node}
+    java-command: ${EXECUTION_JAVA_CMD:java}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

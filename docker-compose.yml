@@ -1,0 +1,300 @@
+services:
+  redis:
+    image: redis:7.2
+    container_name: codesync-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - codesync-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: codesync-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "5671:5671"
+      - "4369:4369"
+      - "25672:25672"
+      - "15672:15672"
+      - "15671:15671"
+      - "1883:1883"
+      - "8883:8883"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+    networks:
+      - codesync-network
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: codesync-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - codesync-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: codesync-auth
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/auth_db
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  project-service:
+    build:
+      context: ./project-service
+      dockerfile: Dockerfile
+    container_name: codesync-project
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/project_db
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  file-service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    container_name: codesync-file
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/file_db
+      - SPRING_REDIS_HOST=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  collab-service:
+    build:
+      context: ./collab-service
+      dockerfile: Dockerfile
+    container_name: codesync-collab
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/collab_db
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  execution-service:
+    build:
+      context: ./execution-service
+      dockerfile: Dockerfile
+    container_name: codesync-execution
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/execution_db
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  version-service:
+    build:
+      context: ./version-service
+      dockerfile: Dockerfile
+    container_name: codesync-version
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/version_db
+      - SPRING_REDIS_HOST=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  comment-service:
+    build:
+      context: ./comment-service
+      dockerfile: Dockerfile
+    container_name: codesync-comment
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/comment_db
+      - SPRING_REDIS_HOST=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: codesync-notification
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/notification_db
+      - SPRING_REDIS_HOST=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  audit-service:
+    build:
+      context: ./audit-service
+      dockerfile: Dockerfile
+    container_name: codesync-audit
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/audit_db
+      - SPRING_REDIS_HOST=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  gateway:
+    build:
+      context: ./codesync-gateway
+      dockerfile: Dockerfile
+    container_name: codesync-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+volumes:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  codesync-network:
+    driver: bridge
