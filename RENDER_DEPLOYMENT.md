@@ -5,14 +5,13 @@ This repo is prepared for Render with a root `render.yaml` Blueprint and `Docker
 ## What Render Will Create
 
 - Public web service: `codesync-gateway`
-- Private services: Eureka and the backend microservices
-- Render Key Value instance: `codesync-redis`
+- Public free web services for Eureka and the backend microservices
 
-Render does not run `docker-compose.yml` directly. This Blueprint deploys each Spring Boot service as a separate Docker-backed Render service.
+Render does not run `docker-compose.yml` directly. This Blueprint deploys each Spring Boot service as a separate Docker-backed Render web service on the free plan.
 
 ## Required External Services
 
-The application currently uses MySQL and RabbitMQ. Render's managed SQL database is PostgreSQL, so use an external MySQL provider and an external RabbitMQ provider, then fill the prompted secret values during Blueprint creation.
+The application currently uses MySQL, RabbitMQ, and Redis. Render's managed SQL database is PostgreSQL, and this free-plan Blueprint does not create paid Render infrastructure, so use external providers and fill the prompted values during Blueprint creation.
 
 For each backend service, set:
 
@@ -37,6 +36,11 @@ Set RabbitMQ values for services that publish or consume messages:
 - `SPRING_RABBITMQ_USERNAME`
 - `SPRING_RABBITMQ_PASSWORD`
 
+Set Redis values for services that use cache/collaboration:
+
+- `REDIS_HOST`
+- `REDIS_PORT`
+
 Set application secrets:
 
 - `JWT_SECRET`
@@ -45,15 +49,16 @@ Set application secrets:
 - `OAUTH2_REDIRECT_URI`
 - `EMAIL_FROM`
 - `RESEND_API_KEY`
-- `RAZORPAY_KEY_ID`
-- `RAZORPAY_KEY_SECRET`
-- `APP_RAZORPAY_KEY_ID`
-- `APP_RAZORPAY_KEY_SECRET`
-- `RAZORPAY_WEBHOOK_SECRET`
 - `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
 - `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET`
 - `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID`
 - `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET`
+
+After Render creates `codesync-eureka`, set `EUREKA_SERVER_URL` to its public URL with `/eureka/` appended, for example:
+
+```text
+https://codesync-eureka.onrender.com/eureka/
+```
 
 ## Deploy Steps
 
