@@ -1,0 +1,129 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: codesync-min-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env.ec2-minimal}
+    volumes:
+      - mysql_minimal_data:/var/lib/mysql
+      - ./mysql-init/init-auth-db.sql:/docker-entrypoint-initdb.d/01-init-auth-db.sql:ro
+      - ./mysql-init/init-project-db.sql:/docker-entrypoint-initdb.d/02-init-project-db.sql:ro
+      - ./mysql-init/init-file-db.sql:/docker-entrypoint-initdb.d/03-init-file-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+    networks:
+      - codesync-minimal-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: codesync-min-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_minimal_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks:
+      - codesync-minimal-network
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: codesync-min-eureka
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2-minimal/eureka-server.env
+    ports:
+      - "8761:8761"
+    networks:
+      - codesync-minimal-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: codesync-min-auth
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2-minimal/auth-service.env
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-minimal-network
+
+  project-service:
+    build:
+      context: ./project-service
+      dockerfile: Dockerfile
+    container_name: codesync-min-project
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2-minimal/project-service.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-minimal-network
+
+  file-service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    container_name: codesync-min-file
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2-minimal/file-service.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-minimal-network
+
+  gateway:
+    build:
+      context: ./codesync-gateway
+      dockerfile: Dockerfile
+    container_name: codesync-min-gateway
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2-minimal/codesync-gateway.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      project-service:
+        condition: service_started
+      file-service:
+        condition: service_started
+    networks:
+      - codesync-minimal-network
+
+volumes:
+  mysql_minimal_data:
+  redis_minimal_data:
+
+networks:
+  codesync-minimal-network:
+    driver: bridge
