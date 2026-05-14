@@ -1,0 +1,140 @@
+spring:
+  application:
+    name: codesync-gateway
+  cloud:
+    gateway:
+      httpclient:
+        websocket:
+          enabled: true
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth(?<segment>/?.*), /api/auth$\{segment}
+
+        - id: project-service
+          uri: lb://project-service
+          predicates:
+            - Path=/api/projects/**
+          filters:
+            - RewritePath=/api/projects(?<segment>/?.*), /api/projects$\{segment}
+
+        - id: file-service
+          uri: lb://file-service
+          predicates:
+            - Path=/api/files/**
+          filters:
+            - RewritePath=/api/files(?<segment>/?.*), /api/files$\{segment}
+
+        - id: collab-service
+          uri: lb://collab-service
+          predicates:
+            - Path=/api/collab/**
+          filters:
+            - RewritePath=/api/collab(?<segment>/?.*), /api/collab$\{segment}
+
+        - id: execution-service
+          uri: lb://execution-service
+          predicates:
+            - Path=/api/execution/**
+          filters:
+            - RewritePath=/api/execution(?<segment>/?.*), /api/execution$\{segment}
+
+        - id: version-service
+          uri: lb://version-service
+          predicates:
+            - Path=/api/version/**
+          filters:
+            - RewritePath=/api/version(?<segment>/?.*), /api/version${segment}
+
+        - id: version-service-plural
+          uri: lb://version-service
+          predicates:
+            - Path=/api/versions/**
+          filters:
+            - RewritePath=/api/versions(?<segment>/?.*), /api/version${segment}
+
+        - id: comment-service
+          uri: lb://comment-service
+          predicates:
+            - Path=/api/comments/**
+          filters:
+            - RewritePath=/api/comments(?<segment>/?.*), /api/comments$\{segment}
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - RewritePath=/api/notifications(?<segment>/?.*), /api/notifications$\{segment}
+
+        - id: notification-service-ws
+          uri: lb://notification-service
+          predicates:
+            - Path=/ws/notifications/**
+          filters:
+            - RewritePath=/ws/notifications(?<segment>/?.*), /ws/notifications${segment}
+
+        - id: collab-service-ws
+          uri: lb://collab-service
+          predicates:
+            - Path=/ws/**
+
+        - id: audit-service
+          uri: lb://audit-service
+          predicates:
+            - Path=/api/audit/**
+          filters:
+            - RewritePath=/api/audit(?<segment>/?.*), /api/audit$\{segment}
+
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payment/**
+          filters:
+            - RewritePath=/api/payment(?<segment>/?.*), /api/payment$\{segment}
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+              - HEAD
+            allowedHeaders: "*"
+            exposedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+  server:
+    port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
