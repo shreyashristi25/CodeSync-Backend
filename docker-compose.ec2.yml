@@ -1,0 +1,266 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: codesync-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env.ec2}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - codesync-network
+
+  redis:
+    image: redis:7.2
+    container_name: codesync-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - codesync-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: codesync-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set RABBITMQ_USER in .env.ec2}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?set RABBITMQ_PASS in .env.ec2}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+    networks:
+      - codesync-network
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: codesync-eureka
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/eureka-server.env
+    ports:
+      - "8761:8761"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - codesync-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: codesync-auth
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/auth-service.env
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  project-service:
+    build:
+      context: ./project-service
+      dockerfile: Dockerfile
+    container_name: codesync-project
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/project-service.env
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  file-service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    container_name: codesync-file
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/file-service.env
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  collab-service:
+    build:
+      context: ./collab-service
+      dockerfile: Dockerfile
+    container_name: codesync-collab
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/collab-service.env
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  execution-service:
+    build:
+      context: ./execution-service
+      dockerfile: Dockerfile
+    container_name: codesync-execution
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/execution-service.env
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  version-service:
+    build:
+      context: ./version-service
+      dockerfile: Dockerfile
+    container_name: codesync-version
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/version-service.env
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  comment-service:
+    build:
+      context: ./comment-service
+      dockerfile: Dockerfile
+    container_name: codesync-comment
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/comment-service.env
+    ports:
+      - "8087:8087"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: codesync-notification
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/notification-service.env
+    ports:
+      - "8088:8088"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  audit-service:
+    build:
+      context: ./audit-service
+      dockerfile: Dockerfile
+    container_name: codesync-audit
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/audit-service.env
+    ports:
+      - "8092:8092"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+  gateway:
+    build:
+      context: ./codesync-gateway
+      dockerfile: Dockerfile
+    container_name: codesync-gateway
+    restart: unless-stopped
+    env_file:
+      - ./env/ec2/codesync-gateway.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_started
+    networks:
+      - codesync-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  codesync-network:
+    driver: bridge
